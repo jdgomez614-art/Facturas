@@ -1,0 +1,98 @@
+{
+  "$comentario": "Catálogos y reglas del negocio. Todo lo que no es secreto vive aquí y se versiona en git.",
+  "empresa": {
+    "nombre": "Mi Empresa S.A.S.",
+    "nits_propios": ["900000000"]
+  },
+  "tipos_movimiento": ["Ingreso facturación", "Egreso facturación"],
+  "categorias": [
+    "Arriendos y servicios",
+    "Nómina",
+    "Licencias",
+    "Gastos Administrativos",
+    "Honorarios",
+    "Pago Nómina",
+    "Otros Egresos",
+    "Gastos de terceros"
+  ],
+  "centros_costos": [
+    "Sociedad",
+    "Casa Merida Centro",
+    "Local Alamos",
+    "Local CC PVR",
+    "Local Chico 95",
+    "Local Torre CCI",
+    "Locales Comerciales 82",
+    "Oficinas Wynwood Sky",
+    "Portafolio Vivienda 1 (Etapa 1)",
+    "Portafolio Vivienda 1 (Etapa 2)",
+    "Portafolio Vivienda 2",
+    "Portafolio Vivienda 3",
+    "Portafolio Vivienda 4",
+    "Portafolio Vivienda 8 (Etapa 2)",
+    "Portafolio Vivienda 13",
+    "Portafolio Vivienda 15 Plus",
+    "SKYPOINTER"
+  ],
+  "cuentas_por_categoria": {
+    "$comentario": "Cuenta contable (PUC) por defecto según categoría. AJUSTAR al plan de cuentas real.",
+    "Arriendos y servicios": "513525",
+    "Nómina": "510506",
+    "Licencias": "516515",
+    "Gastos Administrativos": "519595",
+    "Honorarios": "511025",
+    "Pago Nómina": "250505",
+    "Otros Egresos": "539595",
+    "Gastos de terceros": "281505"
+  },
+  "tarjetas": [
+    { "alias": "Visa Corporativa", "tipo": "Crédito", "ultimos4": "1234", "banco": "Banco X" },
+    { "alias": "Débito Cuenta Corriente", "tipo": "Débito", "ultimos4": "5678", "banco": "Banco X" }
+  ],
+  "reglas": [
+    {
+      "nombre": "Energía (Enel)",
+      "si": { "remitente_contiene": ["enel.com"], "texto_contiene": ["enel", "codensa"] },
+      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Servicio público" }
+    },
+    {
+      "nombre": "Acueducto Bogotá",
+      "si": { "texto_contiene": ["acueducto", "eaab"] },
+      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Servicio público" }
+    },
+    {
+      "nombre": "Gas (Vanti)",
+      "si": { "texto_contiene": ["vanti"] },
+      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Servicio público" }
+    },
+    {
+      "nombre": "Cuotas de administración",
+      "si": { "texto_contiene": ["cuota de administración", "cuota de administracion", "propiedad horizontal"] },
+      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Administración" }
+    },
+    {
+      "nombre": "Ejemplo: Google Workspace siempre a la Visa",
+      "si": { "remitente_contiene": ["payments-noreply@google.com"] },
+      "asignar": { "categoria": "Licencias", "centro_costos": "Sociedad", "medio_pago": "Crédito", "tarjeta": "1234" }
+    }
+  ],
+  "referencias_centro_costos": [
+    { "$comentario": "Si el texto del correo/factura contiene alguno de estos textos (dirección, # contrato, # cuenta de servicio), se asigna ese centro de costos.", "contiene": ["chico 95", "chicó 95"], "centro_costos": "Local Chico 95" },
+    { "contiene": ["torre cci"], "centro_costos": "Local Torre CCI" },
+    { "contiene": ["wynwood"], "centro_costos": "Oficinas Wynwood Sky" },
+    { "contiene": ["skypointer"], "centro_costos": "SKYPOINTER" }
+  ],
+  "remitentes_ignorados": ["no-reply@slack.com", "notifications@github.com"],
+  "palabras_clave": [
+    "factura", "cuenta de cobro", "cobro", "recibo", "pago", "vencimiento", "valor a pagar",
+    "administración", "administracion", "energía", "energia", "acueducto", "gas natural",
+    "invoice", "receipt", "payment", "cargo", "extracto"
+  ],
+  "revision": {
+    "confianza_minima": 0.75,
+    "tolerancia_cuadre": 0.02
+  },
+  "recordatorios": {
+    "dias_antes_vencimiento": 5
+  }
+}

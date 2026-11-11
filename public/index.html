@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facturas automáticas</title>
+<style>
+  :root { --bg:#f6f5f1; --card:#fff; --ink:#1c1b19; --muted:#6b6a65; --line:#e4e2db; --accent:#1f6f54; --err:#a3312a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --card:#1f1f1c; --ink:#eceae4; --muted:#a09e96; --line:#33322e; --accent:#5fc49d; --err:#f08a80; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; display:grid; place-items:center; min-height:100vh; padding:16px; }
+  main { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:32px; max-width:520px; width:100%; }
+  h1 { font-size:1.5rem; margin:0 0 8px; }
+  p { color:var(--muted); margin:0 0 16px; }
+  ul { padding-left:20px; margin:0 0 24px; }
+  li { margin-bottom:6px; }
+  a.btn { display:inline-block; background:var(--accent); color:var(--card); text-decoration:none; font-weight:600; padding:12px 20px; border-radius:8px; }
+  .msg { border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:20px; }
+  .msg.err { border-color:var(--err); color:var(--err); }
+  .msg a { color:var(--accent); }
+  small { display:block; color:var(--muted); margin-top:20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Facturas automáticas</h1>
+  <div id="msg"></div>
+  <p>Conecta tu cuenta de Google y el sistema se encarga del resto:</p>
+  <ul>
+    <li>Revisa tu correo y detecta facturas, cuentas de cobro y recibos de servicios.</li>
+    <li>Los clasifica por tipo de gasto, centro de costos, medio de pago y tarjeta.</li>
+    <li>Guarda cada archivo en tu Drive, en una carpeta por tipo de gasto.</li>
+    <li>Los registra en una hoja de cálculo y avisa en Slack lo que hay que pagar.</li>
+  </ul>
+  <a class="btn" href="/api/conectar/google">Conectar con Google</a>
+  <small>El correo se abre en solo lectura: nunca se borra, mueve ni marca nada. En Drive el sistema solo puede ver la carpeta y la hoja que él mismo crea. Puedes retirar el acceso cuando quieras en myaccount.google.com/permissions.</small>
+</main>
+<script>
+  const p = new URLSearchParams(location.search), el = document.getElementById("msg");
+  const add = (tag, text, href) => { const n = document.createElement(tag); n.textContent = text; if (href) { n.href = href; n.target = "_blank"; n.rel = "noopener"; } el.append(n, " "); };
+  const idOk = (s) => /^[\w-]+$/.test(s || "");
+  if (p.get("error")) { el.className = "msg err"; el.textContent = p.get("error"); }
+  else if (p.get("ok")) {
+    el.className = "msg";
+    add("strong", "Listo: " + p.get("ok") + " quedó conectado.");
+    if (idOk(p.get("sheet"))) add("a", "Abrir la hoja de registro", "https://docs.google.com/spreadsheets/d/" + p.get("sheet"));
+    if (idOk(p.get("carpeta"))) add("a", "Abrir la carpeta de Drive", "https://drive.google.com/drive/folders/" + p.get("carpeta"));
+  }
+  if (location.search) history.replaceState(null, "", "/");
+</script>
+</body>
+</html>

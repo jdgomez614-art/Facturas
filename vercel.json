@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 300,
+      "includeFiles": "config/**"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/poll",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/recordatorios",
+      "schedule": "0 13 * * 1-5"
+    }
+  ]
+}
