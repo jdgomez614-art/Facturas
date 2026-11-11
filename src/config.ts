@@ -7,6 +7,8 @@ const ReglaSchema = z.object({
   nombre: z.string(),
   si: z.object({
     remitente_contiene: z.array(z.string()).optional(),
+    /** Coincide contra el nombre del tercero / razón social / remitente (no contra todo el texto del correo). */
+    tercero_contiene: z.array(z.string()).optional(),
     texto_contiene: z.array(z.string()).optional(),
     nit: z.array(z.string()).optional(),
   }),
@@ -22,8 +24,9 @@ const ReglaSchema = z.object({
 });
 
 export const EmpresaConfigSchema = z.object({
-  /** Las sociedades del grupo. El centro de costos de cada factura ES la sociedad a cuyo nombre está. */
-  sociedades: z.array(z.object({ nombre: z.string(), nit: z.string().regex(/^\d{9}(-\d)?$/), inmueble: z.string() })).min(1),
+  /** Las sociedades del grupo. El centro de costos de cada factura es una sociedad, identificada por su código
+   *  corto (el mismo que usa contabilidad en sus hojas: "BOG 9513", "CLO 629"...). */
+  sociedades: z.array(z.object({ codigo: z.string(), nombre: z.string(), nit: z.string().regex(/^\d{9}(-\d)?$/), inmueble: z.string() })).min(1),
   /** La sociedad que opera: recibe las facturas de gastos de los inmuebles y factura los arriendos.
    *  Un documento a su nombre NO define el centro de costos: se busca a qué sociedad/inmueble corresponde. */
   sociedad_operadora: z.string(),
@@ -54,7 +57,7 @@ export type Regla = z.infer<typeof ReglaSchema>;
 /** Carga y valida el JSON; además verifica que las reglas apunten a valores que existen en los catálogos. */
 export function parseEmpresaConfig(raw: unknown): EmpresaConfig {
   const base = EmpresaConfigSchema.parse(stripComments(raw));
-  const cfg: EmpresaConfig = { ...base, centros_costos: base.sociedades.map((s) => s.nombre) };
+  const cfg: EmpresaConfig = { ...base, centros_costos: base.sociedades.map((s) => s.codigo) };
   const errores: string[] = [];
   if (!cfg.centros_costos.includes(cfg.sociedad_operadora)) errores.push(`sociedad_operadora "${cfg.sociedad_operadora}" no está en "sociedades"`);
   for (const r of cfg.reglas) {

@@ -27,13 +27,19 @@ function driveFalso(previos: { name: string; parent: string; folder: boolean }[]
 const pdf = { xml: [], imagenes: [], descartados: [], pdf: [{ filename: "cc.pdf", contentType: "application/pdf", content: Buffer.from("%PDF") }] };
 
 describe("rutaArchivo: misma estructura y nombres que usa contabilidad", () => {
-  const base = { fecha: "2026-10-15", tipo_documento: "Servicio público", tercero: null, razon_social: "ENEL COLOMBIA S.A E.S.P", numero_factura: "412448757" };
+  const base = { fecha: "2026-10-15", tipo_documento: "Servicio público", tarjeta: null, tercero: null, razon_social: "ENEL COLOMBIA S.A E.S.P", numero_factura: "412448757" };
   it("compras", () => {
     expect(rutaArchivo({ ...base, tipo_movimiento: "Egreso facturación" }, 2020, "")).toEqual({
       carpetas: ["01. Compra", "06. 2026", "10. Octubre"],
       nombre: "15 Oct. Enel Colombia 412448757",
     });
     expect(rutaArchivo({ ...base, tipo_movimiento: "Egreso facturación", tipo_documento: "Nota crédito" }, 2020, "").nombre).toMatch(/ NC$/);
+  });
+  it("compras con tarjeta: subcarpeta TC y nombre DDMMAAAA_Proveedor", () => {
+    expect(rutaArchivo({ ...base, fecha: "2026-07-19", tipo_movimiento: "Egreso facturación", razon_social: "Slack", numero_factura: null, tarjeta: "TC 7685 (Matteo) ****7685" }, 2020, "")).toEqual({
+      carpetas: ["01. Compra", "06. 2026", "07. Julio", "TC 7685"],
+      nombre: "19072026_Slack",
+    });
   });
   it("ventas", () => {
     expect(rutaArchivo({ ...base, fecha: "2026-11-09", tipo_movimiento: "Ingreso facturación", razon_social: "Distrito Horeka SAS", numero_factura: "FE 240" }, 2020, "")).toEqual({

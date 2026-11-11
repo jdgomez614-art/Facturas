@@ -40,7 +40,7 @@ export function doc(p: Partial<DocumentoExtraido> = {}): DocumentoExtraido {
     tipo_movimiento: "Egreso facturación",
     categoria: "Honorarios",
     nit_sociedad: null,
-    centro_costos: "TROOP TEAM SAS",
+    centro_costos: "TROOP TEAM",
     moneda: "COP",
     valor_bruto: 2_000_000,
     iva: 0,

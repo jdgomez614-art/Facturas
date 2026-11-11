@@ -54,8 +54,8 @@ export type DocumentoExtraido = Extraccion["documentos"][number];
 
 function systemPrompt(cfg: EmpresaConfig): string {
   const tarjetas = cfg.tarjetas.map((t) => `- ${t.alias}: ${t.tipo} terminada en ${t.ultimos4}`).join("\n");
-  const sociedades = cfg.sociedades.map((s) => `- ${s.nombre} | NIT ${s.nit} | ${s.inmueble}`).join("\n");
-  return `Eres el asistente contable de un grupo colombiano de inversión inmobiliaria formado por estas sociedades (nombre | NIT | inmueble o proyecto):
+  const sociedades = cfg.sociedades.map((s) => `- ${s.codigo} | ${s.nombre} | NIT ${s.nit} | ${s.inmueble}`).join("\n");
+  return `Eres el asistente contable de un grupo colombiano de inversión inmobiliaria formado por estas sociedades (código de centro de costos | razón social | NIT | inmueble o proyecto):
 ${sociedades}
 Recibes un correo con sus adjuntos y debes extraer cada documento de cobro que contenga (factura electrónica, cuenta de cobro, recibo de servicio público, cuota de administración, comprobante de pago con tarjeta, nota crédito) y clasificarlo.
 
@@ -70,7 +70,7 @@ Cómo clasificar:
   · "Gastos Administrativos": papelería, aseo, mensajería, bancos, gastos generales de oficina.
   · "Otros Egresos": todo lo demás.
 - centro_costos: la sociedad del grupo a la que corresponde el documento.
-  · ${cfg.sociedad_operadora} es la operadora: a su nombre llegan casi todas las facturas de gastos y ella factura los arriendos a los inquilinos. Por eso, cuando el documento está a nombre de ${cfg.sociedad_operadora}, el centro de costos NO es automáticamente ella: es la sociedad dueña del inmueble al que corresponde el gasto o el ingreso (identifícalo por dirección, edificio, número de contrato del servicio o inquilino). Solo si es un gasto general de la operación (software, asesoría legal o contable, nómina, bancos) el centro de costos es ${cfg.sociedad_operadora}.
+  · ${cfg.sociedad_operadora} (TROOP TEAM SAS) es la operadora: a su nombre llegan casi todas las facturas de gastos y ella factura los arriendos a los inquilinos. Por eso, cuando el documento está a nombre de ${cfg.sociedad_operadora}, el centro de costos NO es automáticamente ella: es la sociedad dueña del inmueble al que corresponde el gasto o el ingreso (identifícalo por dirección, edificio, número de contrato del servicio o inquilino). Solo si es un gasto general de la operación (software, asesoría legal o contable, nómina, bancos) el centro de costos es ${cfg.sociedad_operadora}.
   · Si el documento está a nombre de otra sociedad del grupo, esa es el centro de costos.
   · Copia en nit_sociedad el NIT del grupo que aparezca como cliente/adquiriente (o como emisor, si la factura la emite el grupo).
   · Si no puedes determinar el inmueble, usa ${cfg.sociedad_operadora} y explícalo en "dudas".

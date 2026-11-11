@@ -20,7 +20,7 @@ describe("construirFactura", () => {
   it("factura a nombre de la operadora: valores oficiales del XML, regla por NIT y sociedad por # de contrato", () => {
     const xml = parseFacturaDian(invoiceXml)!;
     const f = construirFactura(
-      { doc: doc({ tipo_documento: "Factura electrónica", numero_factura: "FE-1234", categoria: "Otros Egresos", centro_costos: "TROOP TEAM SAS", valor_bruto: 1, total_a_pagar: 1 }), xml },
+      { doc: doc({ tipo_documento: "Factura electrónica", numero_factura: "FE-1234", categoria: "Otros Egresos", centro_costos: "TROOP TEAM", valor_bruto: 1, total_a_pagar: 1 }), xml },
       { correo: correo(), cfg, trm: 4000 },
     );
     expect(f).toMatchObject({
@@ -28,7 +28,7 @@ describe("construirFactura", () => {
       tipo_movimiento: "Egreso facturación",
       categoria: "Arriendos y servicios", // regla Enel (por NIT) gana sobre el modelo
       tipo_documento: "Servicio público",
-      centro_costos: "TROOP BOG 9513-1 SAS", // el contrato 1381914 es el del local Chicó 95
+      centro_costos: "BOG 9513", // el contrato 1381914 es el del local Chicó 95
       cuenta: "513525",
       nit: "860063875",
       valor_bruto: 1_000_000,
@@ -49,20 +49,20 @@ describe("construirFactura", () => {
   it("factura a nombre de otra sociedad del grupo: esa sociedad manda, diga lo que diga el texto", () => {
     const xml = { ...parseFacturaDian(invoiceXml)!, receptor_nit: "901632013" };
     const f = construirFactura({ doc: doc({ numero_factura: "FE-1234" }), xml }, { correo: correo(), cfg, trm: null });
-    expect(f.centro_costos).toBe("TROOP BOG 5762-3 SAS");
+    expect(f.centro_costos).toBe("BOG 5762");
   });
 
   it("gasto general a nombre de la operadora se queda en la operadora", () => {
     const xml = { ...parseFacturaDian(invoiceXml)!, emisor_nit: "901398069", descripcion_items: ["Suscripción plataforma"] };
-    const f = construirFactura({ doc: doc({ numero_factura: "FE-1234", centro_costos: "TROOP TEAM SAS" }), xml }, { correo: correo(), cfg, trm: null });
-    expect(f).toMatchObject({ centro_costos: "TROOP TEAM SAS", categoria: "Licencias" });
+    const f = construirFactura({ doc: doc({ numero_factura: "FE-1234", centro_costos: "TROOP TEAM" }), xml }, { correo: correo(), cfg, trm: null });
+    expect(f).toMatchObject({ centro_costos: "TROOP TEAM", categoria: "Licencias" });
   });
 
   it("detecta factura emitida por la empresa como ingreso", () => {
     const xml = { ...parseFacturaDian(invoiceXml)!, emisor_nit: "9014650154", receptor_nit: "900236520", receptor_razon_social: "CADENA COMERCIAL OXXO COLOMBIA SAS", descripcion_items: ["Arriendo"] };
     const f = construirFactura({ doc: null, xml }, { correo: correo(), cfg, trm: null });
     expect(f.tipo_movimiento).toBe("Ingreso facturación");
-    expect(f.centro_costos).toBe("TROOP BOG 9364-4 SAS"); // la operadora factura; el inquilino (OXXO) indica la sociedad
+    expect(f.centro_costos).toBe("BOG 9364"); // la operadora factura; el inquilino (OXXO) indica la sociedad
     expect(f.nit).toBe("900236520");
     expect(f.razon_social).toBe("CADENA COMERCIAL OXXO COLOMBIA SAS");
     expect(f.requiere_revision).toBe(true); // sin documento del modelo
@@ -70,9 +70,9 @@ describe("construirFactura", () => {
 
   it("sin XML: usa el NIT de la sociedad que leyó el modelo; si no, la pista del inmueble; si no, lo que diga el modelo", () => {
     const con = (d: Parameters<typeof doc>[0], texto = "") => construirFactura({ doc: doc(d), xml: null }, { correo: correo({ text: texto }), cfg, trm: null }).centro_costos;
-    expect(con({ nit_sociedad: "901.826.069-1", centro_costos: "TROOP TEAM SAS" }, "administración torre cci")).toBe("TROOP PORTAFOLIO VIVIENDA 2 SAS");
-    expect(con({ centro_costos: "TROOP TEAM SAS" }, "Cuota de administración Torre CCI")).toBe("TROOP CLO 629-1 SAS");
-    expect(con({ centro_costos: "TROOP MEX SAS" })).toBe("TROOP MEX SAS");
+    expect(con({ nit_sociedad: "901.826.069-1", centro_costos: "TROOP TEAM" }, "administración torre cci")).toBe("PORTAFOLIO VIVIENDA 2");
+    expect(con({ centro_costos: "TROOP TEAM" }, "Cuota de administración Torre CCI")).toBe("CLO 629");
+    expect(con({ centro_costos: "MEX" })).toBe("MEX");
   });
 
   it("marca revisión si la factura está a nombre de un NIT ajeno al grupo", () => {
@@ -82,8 +82,8 @@ describe("construirFactura", () => {
   });
 
   it("asigna tarjeta registrada y su tipo", () => {
-    const f = construirFactura({ doc: doc({ tarjeta_ultimos4: "1234", estado_pago: "Pagada" }), xml: null }, { correo: correo(), cfg, trm: null });
-    expect(f.tarjeta).toBe("Visa Corporativa ****1234");
+    const f = construirFactura({ doc: doc({ tarjeta_ultimos4: "7685", estado_pago: "Pagada" }), xml: null }, { correo: correo(), cfg, trm: null });
+    expect(f.tarjeta).toBe("TC 7685 (Matteo) ****7685");
     expect(f.medio_pago).toBe("Crédito");
     expect(f.estado).toBe("Pagada");
     expect(f.fecha_pago).toBe("2026-11-01");
@@ -91,15 +91,16 @@ describe("construirFactura", () => {
 
   it("la pista por inquilino no aplica a compras (Davivienda como banco no es Torre CCI)", () => {
     const f = construirFactura({ doc: doc(), xml: null }, { correo: correo({ text: "Consignar a la cuenta Davivienda 123" }), cfg, trm: null });
-    expect(f.centro_costos).toBe("TROOP TEAM SAS");
+    expect(f.centro_costos).toBe("TROOP TEAM");
   });
 
-  it("regla por remitente fija la tarjeta (Google Workspace)", () => {
-    const f = construirFactura(
-      { doc: doc({ categoria: "Otros Egresos", tipo_documento: "Comprobante de pago" }), xml: null },
-      { correo: correo({ from: "Google Payments <payments-noreply@google.com>" }), cfg, trm: null },
-    );
-    expect(f).toMatchObject({ categoria: "Licencias", medio_pago: "Crédito", tarjeta: "Visa Corporativa ****1234", centro_costos: "TROOP TEAM SAS" });
+  it("regla por tercero fija tarjeta, categoría y centro de costos (Slack → TC 7685; HubSpot → TC 3873)", () => {
+    const con = (tercero: string) => construirFactura({ doc: doc({ tercero, razon_social: tercero, categoria: "Otros Egresos", tipo_documento: "Comprobante de pago" }), xml: null }, { correo: correo(), cfg, trm: null });
+    expect(con("Slack Technologies")).toMatchObject({ categoria: "Licencias", medio_pago: "Crédito", tarjeta: "TC 7685 (Matteo) ****7685", centro_costos: "TROOP TEAM" });
+    expect(con("HubSpot Latin America")).toMatchObject({ categoria: "Licencias", tarjeta: "TC 3873 (Juan) ****3873" });
+    // "slack" en el cuerpo del correo de otro proveedor no dispara la regla
+    const otro = construirFactura({ doc: doc(), xml: null }, { correo: correo({ text: "Escríbenos por Slack" }), cfg, trm: null });
+    expect(otro.tarjeta).toBeNull();
   });
 
   it("marca revisión: tarjeta desconocida, confianza baja, no cuadra", () => {

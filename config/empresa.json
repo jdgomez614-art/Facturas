@@ -2,57 +2,67 @@
   "$comentario": "Catálogos y reglas del negocio. Todo lo que no es secreto vive aquí y se versiona en git.",
   "sociedades": [
     {
+      "codigo": "TROOP TEAM",
       "nombre": "TROOP TEAM SAS",
       "nit": "901465015-4",
       "inmueble": "N/A (sociedad matriz / operación general)"
     },
     {
+      "codigo": "BOG 9513",
       "nombre": "TROOP BOG 9513-1 SAS",
       "nit": "901429709-4",
       "inmueble": "Local Chicó 95"
     },
     {
+      "codigo": "CLO 629",
       "nombre": "TROOP CLO 629-1 SAS",
       "nit": "901604218-1",
       "inmueble": "Local Torre CCI"
     },
     {
+      "codigo": "BOG 5762",
       "nombre": "TROOP BOG 5762-3 SAS",
       "nit": "901632013-6",
       "inmueble": "Local CC PVR"
     },
     {
+      "codigo": "BOG 9364",
       "nombre": "TROOP BOG 9364-4 SAS",
       "nit": "901698923-7",
       "inmueble": "Local Álamos"
     },
     {
+      "codigo": "MEX",
       "nombre": "TROOP MEX SAS",
       "nit": "901727108-6",
       "inmueble": "Casa Mérida"
     },
     {
+      "codigo": "PREMIUM DVP",
       "nombre": "TROOP PREMIUM DVP SAS",
       "nit": "901788055-4",
       "inmueble": "Desarrollo St Petersburg y West Palm Beach (Datura)"
     },
     {
+      "codigo": "PLUS DF",
       "nombre": "TROOP PLUS DF SAS",
       "nit": "901802129-1",
       "inmueble": "Portafolios de Vivienda (excepto PV2), Locales Comerciales 82"
     },
     {
+      "codigo": "PORTAFOLIO VIVIENDA 2",
       "nombre": "TROOP PORTAFOLIO VIVIENDA 2 SAS",
       "nit": "901826069-1",
       "inmueble": "Portafolio Vivienda 2"
     },
     {
+      "codigo": "ALTS",
       "nombre": "TROOP ALTS SAS",
       "nit": "901856054-1",
       "inmueble": "Skypointer"
     }
   ],
-  "sociedad_operadora": "TROOP TEAM SAS",
+  "sociedad_operadora": "TROOP TEAM",
   "tipos_movimiento": [
     "Ingreso facturación",
     "Egreso facturación"
@@ -80,16 +90,14 @@
   },
   "tarjetas": [
     {
-      "alias": "Visa Corporativa",
+      "alias": "TC 7685 (Matteo)",
       "tipo": "Crédito",
-      "ultimos4": "1234",
-      "banco": "Banco X"
+      "ultimos4": "7685"
     },
     {
-      "alias": "Débito Cuenta Corriente",
-      "tipo": "Débito",
-      "ultimos4": "5678",
-      "banco": "Banco X"
+      "alias": "TC 3873 (Juan)",
+      "tipo": "Crédito",
+      "ultimos4": "3873"
     }
   ],
   "reglas": [
@@ -127,7 +135,7 @@
       "asignar": {
         "categoria": "Arriendos y servicios",
         "tipo_documento": "Administración",
-        "centro_costos": "TROOP BOG 9513-1 SAS"
+        "centro_costos": "BOG 9513"
       }
     },
     {
@@ -192,27 +200,105 @@
       }
     },
     {
-      "nombre": "HubSpot",
+      "nombre": "Software en dólares → TC 7685",
       "si": {
-        "texto_contiene": [
-          "hubspot"
-        ]
-      },
-      "asignar": {
-        "categoria": "Licencias"
-      }
-    },
-    {
-      "nombre": "Ejemplo: Google Workspace siempre a la Visa",
-      "si": {
-        "remitente_contiene": [
-          "payments-noreply@google.com"
+        "tercero_contiene": [
+          "google workspace",
+          "gsuite",
+          "slack",
+          "zapier",
+          "notion",
+          "truora",
+          "dropbox",
+          "docsend",
+          "treble",
+          "adobe",
+          "pandadoc",
+          "bubble",
+          "streamyard",
+          "platzi",
+          "zapsign",
+          "sendgrid",
+          "canva",
+          "openai",
+          "godaddy"
         ]
       },
       "asignar": {
         "categoria": "Licencias",
+        "centro_costos": "TROOP TEAM",
         "medio_pago": "Crédito",
-        "tarjeta": "1234"
+        "tarjeta": "7685"
+      }
+    },
+    {
+      "nombre": "Publicidad (Google Ads, Facebook/Meta) → TC 7685",
+      "si": {
+        "tercero_contiene": [
+          "google ads",
+          "facebook",
+          "facebk",
+          "meta platforms"
+        ]
+      },
+      "asignar": {
+        "centro_costos": "TROOP TEAM",
+        "medio_pago": "Crédito",
+        "tarjeta": "7685"
+      }
+    },
+    {
+      "nombre": "HubSpot → TC 3873",
+      "si": {
+        "tercero_contiene": [
+          "hubspot"
+        ]
+      },
+      "asignar": {
+        "categoria": "Licencias",
+        "centro_costos": "TROOP TEAM",
+        "medio_pago": "Crédito",
+        "tarjeta": "3873"
+      }
+    },
+    {
+      "nombre": "Industrialmedia (hosting) → TC 3873",
+      "si": {
+        "tercero_contiene": [
+          "industrialmedia"
+        ]
+      },
+      "asignar": {
+        "categoria": "Licencias",
+        "centro_costos": "TROOP TEAM",
+        "medio_pago": "Crédito",
+        "tarjeta": "3873"
+      }
+    },
+    {
+      "nombre": "WeWork → TC 3873",
+      "si": {
+        "tercero_contiene": [
+          "wework"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "centro_costos": "TROOP TEAM",
+        "medio_pago": "Crédito",
+        "tarjeta": "3873"
+      }
+    },
+    {
+      "nombre": "Seguros Colpatria → TC 3873",
+      "si": {
+        "tercero_contiene": [
+          "seguros colpatria"
+        ]
+      },
+      "asignar": {
+        "medio_pago": "Crédito",
+        "tarjeta": "3873"
       }
     }
   ],
@@ -228,14 +314,14 @@
         "calle 95 13 55",
         "1381914"
       ],
-      "centro_costos": "TROOP BOG 9513-1 SAS"
+      "centro_costos": "BOG 9513"
     },
     {
       "contiene": [
         "torre cci",
         "contrato n 11741"
       ],
-      "centro_costos": "TROOP CLO 629-1 SAS"
+      "centro_costos": "CLO 629"
     },
     {
       "contiene": [
@@ -243,21 +329,21 @@
         "paseo villa del rio",
         "paseo villa del río"
       ],
-      "centro_costos": "TROOP BOG 5762-3 SAS"
+      "centro_costos": "BOG 5762"
     },
     {
       "contiene": [
         "alamos",
         "álamos"
       ],
-      "centro_costos": "TROOP BOG 9364-4 SAS"
+      "centro_costos": "BOG 9364"
     },
     {
       "contiene": [
         "merida",
         "mérida"
       ],
-      "centro_costos": "TROOP MEX SAS"
+      "centro_costos": "MEX"
     },
     {
       "contiene": [
@@ -265,26 +351,26 @@
         "st petersburg",
         "west palm"
       ],
-      "centro_costos": "TROOP PREMIUM DVP SAS"
+      "centro_costos": "PREMIUM DVP"
     },
     {
       "contiene": [
         "portafolio vivienda 2",
         "portafolio de vivienda 2"
       ],
-      "centro_costos": "TROOP PORTAFOLIO VIVIENDA 2 SAS"
+      "centro_costos": "PORTAFOLIO VIVIENDA 2"
     },
     {
       "contiene": [
         "locales comerciales 82"
       ],
-      "centro_costos": "TROOP PLUS DF SAS"
+      "centro_costos": "PLUS DF"
     },
     {
       "contiene": [
         "skypointer"
       ],
-      "centro_costos": "TROOP ALTS SAS"
+      "centro_costos": "ALTS"
     },
     {
       "contiene": [
@@ -292,28 +378,28 @@
         "minca",
         "horeka"
       ],
-      "centro_costos": "TROOP BOG 9513-1 SAS",
+      "centro_costos": "BOG 9513",
       "solo_ingresos": true
     },
     {
       "contiene": [
         "davivienda"
       ],
-      "centro_costos": "TROOP CLO 629-1 SAS",
+      "centro_costos": "CLO 629",
       "solo_ingresos": true
     },
     {
       "contiene": [
         "oxxo"
       ],
-      "centro_costos": "TROOP BOG 9364-4 SAS",
+      "centro_costos": "BOG 9364",
       "solo_ingresos": true
     },
     {
       "contiene": [
         "famisanar"
       ],
-      "centro_costos": "TROOP BOG 5762-3 SAS",
+      "centro_costos": "BOG 5762",
       "solo_ingresos": true
     }
   ],

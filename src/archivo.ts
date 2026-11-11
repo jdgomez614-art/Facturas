@@ -26,20 +26,28 @@ export function nombreCorto(tercero: string): string {
 /**
  * Reproduce la estructura que ya usa contabilidad dentro de "03. Facturas":
  *   01. Compra / 06. 2026 / 10. Octubre / "15 Oct. Enel 412448757.pdf"
+ *   01. Compra / 06. 2026 / 07. Julio / TC 7685 / "19072026_Slack.pdf"   (pagos con tarjeta)
  *   02. Venta  / 2026     / 11. Noviembre / "FE 240 _ Distrito Horeka.pdf"
  * El número de factura va en el nombre para que dos facturas del mismo día y proveedor no se pisen.
  */
-export function rutaArchivo(f: Pick<Factura, "fecha" | "tipo_movimiento" | "tipo_documento" | "tercero" | "razon_social" | "numero_factura">, anioBase: number, respaldoFecha: string): RutaArchivo {
+export function rutaArchivo(f: Pick<Factura, "fecha" | "tipo_movimiento" | "tipo_documento" | "tercero" | "razon_social" | "numero_factura" | "tarjeta">, anioBase: number, respaldoFecha: string): RutaArchivo {
   const [anio, mes, dia] = (f.fecha ?? respaldoFecha).slice(0, 10).split("-").map(Number);
   const carpetaMes = `${String(mes).padStart(2, "0")}. ${MESES[mes - 1]}`;
   const tercero = nombreCorto(f.tercero ?? f.razon_social ?? "Sin tercero");
   if (f.tipo_movimiento === "Ingreso facturación") {
     return { carpetas: ["02. Venta", String(anio), carpetaMes], nombre: limpio(`${f.numero_factura ?? "SN"} _ ${tercero}`) };
   }
+  const base = ["01. Compra", `${String(anio - anioBase).padStart(2, "0")}. ${anio}`, carpetaMes];
+  // Compras con tarjeta: subcarpeta "TC 7685" dentro del mes y nombre DDMMAAAA_Proveedor, como ya lo hacen.
+  const ultimos4 = /(\d{4})$/.exec(f.tarjeta ?? "")?.[1];
+  if (ultimos4) {
+    const numeroTc = f.numero_factura ? ` ${f.numero_factura}` : "";
+    return { carpetas: [...base, `TC ${ultimos4}`], nombre: limpio(`${String(dia).padStart(2, "0")}${String(mes).padStart(2, "0")}${anio}_${tercero}${numeroTc}`) };
+  }
   const nc = f.tipo_documento === "Nota crédito" ? " NC" : "";
   const numero = f.numero_factura ? ` ${f.numero_factura}` : "";
   return {
-    carpetas: ["01. Compra", `${String(anio - anioBase).padStart(2, "0")}. ${anio}`, carpetaMes],
+    carpetas: base,
     nombre: limpio(`${String(dia).padStart(2, "0")} ${MESES_CORTOS[mes - 1]}. ${tercero}${numero}${nc}`),
   };
 }

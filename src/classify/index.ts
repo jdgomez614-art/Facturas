@@ -17,10 +17,11 @@ export function debeProcesar(correo: CorreoEntrante, adj: AdjuntosClasificados, 
   return cfg.palabras_clave.some((k) => texto.includes(norm(k)));
 }
 
-export function reglaCoincide(regla: Regla, ctx: { remitente: string; texto: string; nit: string }): boolean {
+export function reglaCoincide(regla: Regla, ctx: { remitente: string; texto: string; nit: string; tercero: string }): boolean {
   const { si } = regla;
   const conds: boolean[] = [];
   if (si.remitente_contiene?.length) conds.push(si.remitente_contiene.some((r) => ctx.remitente.includes(norm(r))));
+  if (si.tercero_contiene?.length) conds.push(si.tercero_contiene.some((t) => ctx.tercero.includes(norm(t))));
   if (si.texto_contiene?.length) conds.push(si.texto_contiene.some((t) => ctx.texto.includes(norm(t))));
   if (si.nit?.length) conds.push(si.nit.some((n) => soloDigitos(n) === ctx.nit && ctx.nit !== ""));
   // Una regla sin condiciones nunca aplica; con varias, todas deben cumplirse.
@@ -67,8 +68,8 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
 
   let categoria = doc?.categoria ?? "Otros Egresos";
   // ...salvo que sea la operadora: ahí el centro de costos depende del inmueble (pistas) o de lo que lea el modelo.
-  const defineCentro = sociedad !== null && sociedad.nombre !== cfg.sociedad_operadora;
-  let centro = defineCentro ? sociedad.nombre : doc?.centro_costos ?? cfg.sociedad_operadora;
+  const defineCentro = sociedad !== null && sociedad.codigo !== cfg.sociedad_operadora;
+  let centro = defineCentro ? sociedad.codigo : doc?.centro_costos ?? cfg.sociedad_operadora;
   let tipoDocumento: string = doc?.tipo_documento ?? (xml?.tipo === "CreditNote" ? "Nota crédito" : "Factura electrónica");
   let cuenta: string | null = null;
   let medio: Factura["medio_pago"] = doc?.medio_pago ?? "Por definir";
@@ -77,7 +78,8 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
 
   // 2. Reglas determinísticas del negocio (ganan sobre el modelo).
   const texto = norm([correo.from, correo.subject, correo.text.slice(0, 20000), razonSocial ?? "", doc?.tercero ?? "", doc?.descripcion ?? "", ...(xml?.descripcion_items ?? [])].join("\n"));
-  const rctx = { remitente: norm(correo.from), texto, nit: nit ?? "" };
+  const tercero = norm([razonSocial ?? "", doc?.tercero ?? "", xml?.emisor_nombre_comercial ?? "", correo.from].join(" | "));
+  const rctx = { remitente: norm(correo.from), texto, nit: nit ?? "", tercero };
   const fijado = new Set<string>();
   if (defineCentro) fijado.add("centro");
   else if (sociedad) {
