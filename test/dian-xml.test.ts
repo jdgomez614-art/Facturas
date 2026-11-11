@@ -9,10 +9,10 @@ describe("parseFacturaDian", () => {
     const f = parseFacturaDian(invoiceXml)!;
     expect(f).toMatchObject({
       tipo: "Invoice", numero: "FE-1234", cufe: "abc123cufe", fecha: "2026-11-03", fecha_vencimiento: "2026-11-18",
-      emisor_nit: "0860063875", emisor_razon_social: "ENEL COLOMBIA S.A. E.S.P.", receptor_nit: "901632013",
+      emisor_nit: "0860063875", emisor_razon_social: "ENEL COLOMBIA S.A. E.S.P.", receptor_nit: "901465015",
       valor_bruto: 1_000_000, iva: 190_000, retefuente: 40_000, reteica: 9_660, total_a_pagar: 1_190_000,
     });
-    expect(f.descripcion_items[0]).toContain("Chico 95");
+    expect(f.descripcion_items[0]).toContain("1381914");
   });
 
   it("desempaqueta el AttachedDocument de la DIAN", () => {

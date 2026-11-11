@@ -8,8 +8,13 @@ import type { Conexion, Repo } from "./store/repo.js";
 
 /** Permisos que se le piden a cada persona:
  *  - mail.google.com: leer su correo por IMAP (el sistema lo abre en solo lectura).
- *  - drive.file: SOLO los archivos que crea esta app (la carpeta "Facturas" y la hoja de registro); no ve el resto de su Drive. */
-export const SCOPES_USUARIO = ["openid", "email", "https://mail.google.com/", "https://www.googleapis.com/auth/drive.file"];
+ *  - Drive: si la empresa definió una carpeta y/o una hoja comunes (DRIVE_FOLDER_ID / SHEETS_SPREADSHEET_ID), se pide
+ *    acceso a Drive para poder escribir en ellas, que ya existen. Si no, solo "drive.file": la app únicamente ve la
+ *    carpeta y la hoja que ella misma le crea a cada persona. */
+export function scopesUsuario(env: NodeJS.ProcessEnv = process.env): string[] {
+  const comun = !!(env.DRIVE_FOLDER_ID || env.SHEETS_SPREADSHEET_ID);
+  return ["openid", "email", "https://mail.google.com/", `https://www.googleapis.com/auth/${comun ? "drive" : "drive.file"}`];
+}
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
 export interface GoogleApp {
@@ -28,7 +33,7 @@ export function urlDeAutorizacion(app: GoogleApp, state: string): string {
   return new OAuth2Client(app.clientId, app.clientSecret, app.redirectUri).generateAuthUrl({
     access_type: "offline", // para recibir refresh_token y seguir funcionando sin la persona presente
     prompt: "consent",
-    scope: SCOPES_USUARIO,
+    scope: scopesUsuario(),
     state,
   });
 }
@@ -55,7 +60,7 @@ export async function completarConexion(app: GoogleApp, repo: Repo, code: string
   const email = p?.email_verified ? p.email?.toLowerCase() : undefined;
   if (!email) throw new Error("No se pudo verificar el correo de la cuenta");
   if (!usuarioPermitido(email)) throw new ErrorNoPermitido(email);
-  for (const s of SCOPES_USUARIO.slice(2)) {
+  for (const s of scopesUsuario().slice(2)) {
     if (!tokens.scope?.split(" ").includes(s)) throw new Error("Faltó aceptar todos los permisos (correo y Drive). Intenta de nuevo y marca todas las casillas.");
   }
 
@@ -65,7 +70,8 @@ export async function completarConexion(app: GoogleApp, repo: Repo, code: string
 
   const http = httpDeUsuario(app, refresh);
   let { drive_folder_id, sheet_id } = previa ?? { drive_folder_id: null, sheet_id: null };
-  if (!drive_folder_id) {
+  // Con carpeta/hoja comunes de la empresa no se le crea nada personal a cada usuario.
+  if (!drive_folder_id && !process.env.DRIVE_FOLDER_ID) {
     const r = await http.request<{ id: string }>({
       url: "https://www.googleapis.com/drive/v3/files?fields=id",
       method: "POST",
@@ -73,7 +79,7 @@ export async function completarConexion(app: GoogleApp, repo: Repo, code: string
     });
     drive_folder_id = r.data.id;
   }
-  if (!sheet_id) {
+  if (!sheet_id && !process.env.SHEETS_SPREADSHEET_ID) {
     const r = await http.request<{ spreadsheetId: string }>({
       url: "https://sheets.googleapis.com/v4/spreadsheets?fields=spreadsheetId",
       method: "POST",
@@ -94,7 +100,9 @@ export class ErrorNoPermitido extends Error {
 export const idBuzon = (email: string) => `g-${email.replace(/[^a-z0-9]+/gi, "-")}`;
 
 /** Convierte una conexión guardada en un buzón IMAP + sus destinos (su Sheet y su carpeta de Drive). */
-export function materializar(app: GoogleApp, c: Conexion, pestana: string) {
+export function materializar(app: GoogleApp, c: Conexion, pestana: string, comun: { carpeta?: string; hoja?: string } = {}) {
+  const sheetId = comun.hoja ?? c.sheet_id;
+  const folderId = comun.carpeta ?? c.drive_folder_id;
   const refresh = descifrar(c.refresh_token_cifrado);
   const http = httpDeUsuario(app, refresh);
   const buzon: MailboxConfig = {
@@ -109,7 +117,7 @@ export function materializar(app: GoogleApp, c: Conexion, pestana: string) {
   };
   return {
     buzon,
-    sheets: c.sheet_id ? new SheetsClient(http, c.sheet_id, pestana) : null,
-    drive: c.drive_folder_id ? new DriveClient(http, c.drive_folder_id) : null,
+    sheets: sheetId ? new SheetsClient(http, sheetId, pestana) : null,
+    drive: folderId ? new DriveClient(http, folderId) : null,
   };
 }

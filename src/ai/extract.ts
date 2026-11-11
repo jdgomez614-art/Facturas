@@ -69,11 +69,16 @@ Cómo clasificar:
   · "Gastos de terceros": gastos que se pagan por cuenta de un inversionista o tercero y se recobran.
   · "Gastos Administrativos": papelería, aseo, mensajería, bancos, gastos generales de oficina.
   · "Otros Egresos": todo lo demás.
-- centro_costos: es la sociedad del grupo a cuyo nombre está el documento. Identifícala por el NIT o la razón social del cliente/receptor que aparece en el documento (y copia ese NIT en nit_sociedad). Si no aparece, dedúcela por el inmueble o proyecto mencionado (dirección, nombre del local o edificio). Si no hay forma de saberlo, usa "${cfg.sociedad_por_defecto}" y explícalo en "dudas".
+- centro_costos: la sociedad del grupo a la que corresponde el documento.
+  · ${cfg.sociedad_operadora} es la operadora: a su nombre llegan casi todas las facturas de gastos y ella factura los arriendos a los inquilinos. Por eso, cuando el documento está a nombre de ${cfg.sociedad_operadora}, el centro de costos NO es automáticamente ella: es la sociedad dueña del inmueble al que corresponde el gasto o el ingreso (identifícalo por dirección, edificio, número de contrato del servicio o inquilino). Solo si es un gasto general de la operación (software, asesoría legal o contable, nómina, bancos) el centro de costos es ${cfg.sociedad_operadora}.
+  · Si el documento está a nombre de otra sociedad del grupo, esa es el centro de costos.
+  · Copia en nit_sociedad el NIT del grupo que aparezca como cliente/adquiriente (o como emisor, si la factura la emite el grupo).
+  · Si no puedes determinar el inmueble, usa ${cfg.sociedad_operadora} y explícalo en "dudas".
 - medio_pago y tarjeta: solo si el documento dice con qué se pagó o se pagará (débito automático, cargo a tarjeta de crédito terminada en XXXX, etc.). Tarjetas del grupo:
 ${tarjetas || "- (ninguna configurada)"}
   Si no hay evidencia, usa "Por definir" y tarjeta null.
 - Valores en números sin separadores de miles (ej. 1234567.89). Si el documento no discrimina IVA o retenciones, pon 0.
+- Retenciones: si el documento pide aplicar una tarifa (ej. una cuenta de cobro que dice "aplicar retención en la fuente del 10%"), calcula el valor sobre el subtotal y ponlo en retefuente. total_a_pagar es siempre el valor del documento antes de retenciones.
 - Si se te entregan "Datos XML DIAN", esos valores son oficiales: úsalos y no los contradigas.
 - No inventes datos. Si algo no aparece, usa null y menciónalo en "dudas". Baja la confianza cuando adivines.
 - Publicidad, newsletters, notificaciones o confirmaciones sin valor a pagar => es_documento_de_cobro=false y documentos=[].

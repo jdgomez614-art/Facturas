@@ -21,8 +21,16 @@ Google Sheets y avisa en Slack lo que hay que pagar.
                                      Google Sheets (formato)      Slack (aviso + botones)
 ```
 
-- **Personas**: entran a la página, pulsan *Conectar con Google* y autorizan su correo y su Drive.
-  El sistema les crea una carpeta `Facturas (automático)` y una hoja `Registro de facturas (automático)`.
+- **Personas**: entran a la página, pulsan *Conectar con Google* y autorizan su correo y Drive.
+- **Archivo en Drive**: reproduce la estructura que ya usa contabilidad dentro de `03. Facturas`
+  (`01. Compra/06. 2026/10. Octubre/15 Oct. Enel Colombia 412448757.pdf`,
+  `02. Venta/2026/11. Noviembre/FE 240 _ Distrito Horeka.pdf`). Con `DRIVE_FOLDER_ID` y
+  `SHEETS_SPREADSHEET_ID` todos escriben en la carpeta y la hoja de la empresa; sin ellas, a cada persona se
+  le crea una carpeta y una hoja propias.
+- **Centro de costos = sociedad**. Si el documento está a nombre de una sociedad dueña de inmueble, es esa.
+  Si está a nombre de la operadora (TROOP TEAM, que recibe casi todos los gastos y factura los arriendos),
+  se determina por el inmueble: # de contrato del servicio, edificio, dirección o inquilino
+  (`referencias_centro_costos`). Gastos generales (software, asesoría) quedan en la operadora.
 - **Clasificación**: la factura electrónica (ZIP con XML de la DIAN) se lee de forma exacta: NIT, número,
   CUFE, valores, IVA, retenciones. Claude clasifica categoría / sociedad (centro de costos) / medio de pago / tarjeta y
   extrae los documentos que no traen XML. Las reglas de `config/empresa.json` mandan sobre el modelo.
@@ -57,7 +65,7 @@ Requiere revisión, Motivos, Remitente, Asunto, Recibido, Archivo (Drive), ID si
    Pro; en Hobby solo corre una vez al día (alternativa: cualquier programador externo que llame
    `GET /api/cron/poll` con `Authorization: Bearer $CRON_SECRET`).
 6. **Tu negocio**: edita `config/empresa.json` — sociedades (el centro de costos es la sociedad a cuyo nombre está la factura, por NIT), tarjetas (últimos 4), cuentas contables por
-   categoría, reglas por proveedor y pistas por inmueble para documentos que no traen NIT.
+   categoría, reglas por proveedor (por NIT) y pistas por inmueble (# de contrato, edificio, inquilino).
 7. Abre `https://TU-APP/api/health` para verificar y luego `https://TU-APP/` para conectar la primera cuenta.
 
 Correos que no son Google (Outlook, Zoho, hosting): se agregan en `MAILBOXES_JSON` (ver `.env.example`).

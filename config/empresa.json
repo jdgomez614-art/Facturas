@@ -52,7 +52,7 @@
       "inmueble": "Skypointer"
     }
   ],
-  "sociedad_por_defecto": "TROOP TEAM SAS",
+  "sociedad_operadora": "TROOP TEAM SAS",
   "tipos_movimiento": [
     "Ingreso facturación",
     "Egreso facturación"
@@ -94,19 +94,40 @@
   ],
   "reglas": [
     {
-      "nombre": "Energía (Enel)",
+      "nombre": "Enel (energía)",
       "si": {
-        "remitente_contiene": [
-          "enel.com"
-        ],
-        "texto_contiene": [
-          "enel",
-          "codensa"
+        "nit": [
+          "860063875"
         ]
       },
       "asignar": {
         "categoria": "Arriendos y servicios",
         "tipo_documento": "Servicio público"
+      }
+    },
+    {
+      "nombre": "Movistar / Colombia Telecomunicaciones",
+      "si": {
+        "nit": [
+          "830122566"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "tipo_documento": "Servicio público"
+      }
+    },
+    {
+      "nombre": "Edificio Pavillon (administración Chicó 95)",
+      "si": {
+        "nit": [
+          "830070047"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "tipo_documento": "Administración",
+        "centro_costos": "TROOP BOG 9513-1 SAS"
       }
     },
     {
@@ -149,6 +170,39 @@
       }
     },
     {
+      "nombre": "Siigo (software contable)",
+      "si": {
+        "nit": [
+          "830048145"
+        ]
+      },
+      "asignar": {
+        "categoria": "Licencias"
+      }
+    },
+    {
+      "nombre": "Mono (plataforma)",
+      "si": {
+        "nit": [
+          "901398069"
+        ]
+      },
+      "asignar": {
+        "categoria": "Licencias"
+      }
+    },
+    {
+      "nombre": "HubSpot",
+      "si": {
+        "texto_contiene": [
+          "hubspot"
+        ]
+      },
+      "asignar": {
+        "categoria": "Licencias"
+      }
+    },
+    {
       "nombre": "Ejemplo: Google Workspace siempre a la Visa",
       "si": {
         "remitente_contiene": [
@@ -164,34 +218,44 @@
   ],
   "referencias_centro_costos": [
     {
-      "$comentario": "Pista cuando el documento NO trae el NIT de la sociedad: si el texto menciona el inmueble, se asigna su sociedad. El NIT del receptor siempre manda sobre esto.",
+      "$comentario": "Cuando el documento está a nombre de la operadora (TROOP TEAM), estas pistas dicen a qué sociedad corresponde: dirección, # de contrato del servicio, nombre del edificio. 'solo_ingresos' = pista por inquilino, solo para facturas que emitimos.",
       "contiene": [
         "chico 95",
-        "chicó 95"
+        "chicó 95",
+        "pavillon",
+        "pavilon",
+        "cl 95 13 55",
+        "calle 95 13 55",
+        "1381914"
       ],
       "centro_costos": "TROOP BOG 9513-1 SAS"
     },
     {
       "contiene": [
-        "torre cci"
+        "torre cci",
+        "contrato n 11741"
       ],
       "centro_costos": "TROOP CLO 629-1 SAS"
     },
     {
       "contiene": [
-        "pvr"
+        "cc pvr",
+        "paseo villa del rio",
+        "paseo villa del río"
       ],
       "centro_costos": "TROOP BOG 5762-3 SAS"
     },
     {
       "contiene": [
-        "alamos"
+        "alamos",
+        "álamos"
       ],
       "centro_costos": "TROOP BOG 9364-4 SAS"
     },
     {
       "contiene": [
-        "merida"
+        "merida",
+        "mérida"
       ],
       "centro_costos": "TROOP MEX SAS"
     },
@@ -221,6 +285,36 @@
         "skypointer"
       ],
       "centro_costos": "TROOP ALTS SAS"
+    },
+    {
+      "contiene": [
+        "loguz",
+        "minca",
+        "horeka"
+      ],
+      "centro_costos": "TROOP BOG 9513-1 SAS",
+      "solo_ingresos": true
+    },
+    {
+      "contiene": [
+        "davivienda"
+      ],
+      "centro_costos": "TROOP CLO 629-1 SAS",
+      "solo_ingresos": true
+    },
+    {
+      "contiene": [
+        "oxxo"
+      ],
+      "centro_costos": "TROOP BOG 9364-4 SAS",
+      "solo_ingresos": true
+    },
+    {
+      "contiene": [
+        "famisanar"
+      ],
+      "centro_costos": "TROOP BOG 5762-3 SAS",
+      "solo_ingresos": true
     }
   ],
   "remitentes_ignorados": [
@@ -253,5 +347,9 @@
   },
   "recordatorios": {
     "dias_antes_vencimiento": 5
+  },
+  "archivo": {
+    "$comentario": "Las carpetas de compra por año se numeran 'NN. AAAA' donde NN = año - anio_base (06. 2026).",
+    "anio_base": 2020
   }
 }

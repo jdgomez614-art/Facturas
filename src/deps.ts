@@ -40,7 +40,7 @@ export function depsProduccion(): Deps {
       if (!process.env.GOOGLE_CLIENT_ID) return fijos;
       const app = googleApp();
       const conectados = (await repo.listarConexiones()).map((c): Buzon => {
-        const m = materializar(app, c, env.SHEETS_TAB);
+        const m = materializar(app, c, env.SHEETS_TAB, { carpeta: env.DRIVE_FOLDER_ID, hoja: env.SHEETS_SPREADSHEET_ID });
         return { config: m.buzon, sheets: m.sheets, drive: m.drive, alRevocar: (motivo) => repo.desactivarConexion(c.email, motivo) };
       });
       return [...fijos, ...conectados];

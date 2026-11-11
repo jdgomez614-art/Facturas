@@ -4,6 +4,7 @@ import type { Extractor } from "./ai/extract.js";
 import { construirFactura, debeProcesar, emparejar } from "./classify/index.js";
 import { clasificarAdjuntos } from "./mail/attachments.js";
 import type { LectorCorreo } from "./mail/imap.js";
+import { rutaArchivo } from "./archivo.js";
 import { nombreSeguro, type DriveClient } from "./notify/drive.js";
 import type { SheetsClient } from "./notify/sheets.js";
 import type { SlackClient } from "./notify/slack.js";
@@ -76,7 +77,7 @@ export async function procesarCorreo(correo: CorreoEntrante, deps: Deps, destino
       continue;
     }
     // Se archiva antes de guardar: si Drive falla, el correo completo se reintenta y nada queda a medias.
-    if (destinos.drive) factura.drive_url = await archivarEnDrive(destinos.drive, factura, correo, adj);
+    if (destinos.drive) factura.drive_url = await archivarEnDrive(destinos.drive, factura, correo, adj, cfg.archivo.anio_base);
     try {
       nuevas.push(await repo.insertarFactura(factura));
     } catch (e) {
@@ -89,24 +90,29 @@ export async function procesarCorreo(correo: CorreoEntrante, deps: Deps, destino
   return { estado: "procesado", nuevas, duplicadas };
 }
 
-/** Sube los adjuntos (PDF/XML/imagen) a <Categoría>/<AAAA-MM>/. Si el correo no trae adjuntos, guarda el texto del correo. */
-export async function archivarEnDrive(drive: DriveClient, f: Factura, correo: CorreoEntrante, adj: AdjuntosClasificados): Promise<string> {
-  const mes = (f.fecha ?? correo.date.toISOString()).slice(0, 7);
-  const carpeta = await drive.carpeta([f.categoria, mes]);
-  const prefijo = nombreSeguro([f.fecha, f.tercero ?? f.razon_social ?? "sin-tercero", f.numero_factura ?? correo.uid].filter(Boolean).join("_"), 90);
+/** Archiva los adjuntos con la estructura y los nombres que ya usa contabilidad (ver archivo.ts).
+ *  Si el correo no trae adjuntos, guarda el texto del correo. */
+export async function archivarEnDrive(drive: DriveClient, f: Factura, correo: CorreoEntrante, adj: AdjuntosClasificados, anioBase: number): Promise<string> {
+  const ruta = rutaArchivo(f, anioBase, correo.date.toISOString());
+  const carpeta = await drive.carpeta(ruta.carpetas);
+  const ext = (a: { filename: string }, porDefecto: string) => (/\.([a-z0-9]{2,5})$/i.exec(a.filename)?.[1] ?? porDefecto).toLowerCase();
   const archivos = [
-    ...adj.pdf.map((a) => ({ a, mime: "application/pdf" })),
-    ...adj.imagenes.map((a) => ({ a, mime: a.contentType || "image/jpeg" })),
-    ...adj.xml.map((a) => ({ a, mime: "application/xml" })),
+    ...adj.pdf.map((a) => ({ a, mime: "application/pdf", ext: "pdf" })),
+    ...adj.imagenes.map((a) => ({ a, mime: a.contentType || "image/jpeg", ext: ext(a, "jpg") })),
+    ...adj.xml.map((a) => ({ a, mime: "application/xml", ext: "xml" })),
   ];
   if (!archivos.length) {
     const texto = `De: ${correo.from}\nAsunto: ${correo.subject}\nFecha: ${correo.date.toISOString()}\n\n${correo.text}`;
-    return (await drive.subir(carpeta, `${prefijo}.txt`, "text/plain; charset=UTF-8", Buffer.from(texto))).webViewLink;
+    return (await drive.subir(carpeta, `${ruta.nombre}.txt`, "text/plain; charset=UTF-8", Buffer.from(texto))).webViewLink;
   }
   let principal = "";
-  for (const { a, mime } of archivos) {
-    const sufijo = archivos.length > 1 ? `_${nombreSeguro(a.filename, 60)}` : `.${a.filename.split(".").pop()}`;
-    const subido = await drive.subir(carpeta, prefijo + sufijo, mime, a.content);
+  const usados = new Map<string, number>();
+  for (const x of archivos) {
+    // El primero de cada tipo lleva el nombre limpio; los demás se numeran (anexos).
+    const n = (usados.get(x.ext) ?? 0) + 1;
+    usados.set(x.ext, n);
+    const nombre = nombreSeguro(`${ruta.nombre}${n > 1 ? ` (${n})` : ""}.${x.ext}`, 150);
+    const subido = await drive.subir(carpeta, nombre, x.mime, x.a.content);
     principal ||= subido.webViewLink; // el primero es el PDF si existe
   }
   return principal;

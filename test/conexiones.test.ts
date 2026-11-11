@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { idBuzon, materializar, urlDeAutorizacion, usuarioPermitido } from "../src/conexiones.js";
+import { idBuzon, materializar, scopesUsuario, urlDeAutorizacion, usuarioPermitido } from "../src/conexiones.js";
 import { cifrar, descifrar, firmar, verificarFirmado } from "../src/crypto.js";
 
 beforeAll(() => {
@@ -44,5 +44,9 @@ describe("conexiones", () => {
     );
     expect(m.buzon).toMatchObject({ id: idBuzon("ana@empresa.com"), host: "imap.gmail.com", user: "ana@empresa.com", desde: "2026-11-11", auth: { tipo: "oauth2", refresh_token: "rt" } });
     expect(m.sheets && m.drive).toBeTruthy();
+  });
+  it("con carpeta u hoja común de la empresa pide acceso a Drive; si no, solo a lo que crea la app", () => {
+    expect(scopesUsuario({})).toContain("https://www.googleapis.com/auth/drive.file");
+    expect(scopesUsuario({ DRIVE_FOLDER_ID: "x" })).toContain("https://www.googleapis.com/auth/drive");
   });
 });

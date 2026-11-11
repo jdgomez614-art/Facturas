@@ -17,20 +17,20 @@ describe("debeProcesar", () => {
 });
 
 describe("construirFactura", () => {
-  it("con XML DIAN: valores oficiales, egreso, reglas y sociedad por NIT del receptor", () => {
+  it("factura a nombre de la operadora: valores oficiales del XML, regla por NIT y sociedad por # de contrato", () => {
     const xml = parseFacturaDian(invoiceXml)!;
     const f = construirFactura(
-      { doc: doc({ tipo_documento: "Factura electrónica", numero_factura: "FE-1234", categoria: "Otros Egresos", valor_bruto: 1, total_a_pagar: 1 }), xml },
-      { correo: correo({ from: "facturacion@enel.com" }), cfg, trm: 4000 },
+      { doc: doc({ tipo_documento: "Factura electrónica", numero_factura: "FE-1234", categoria: "Otros Egresos", centro_costos: "TROOP TEAM SAS", valor_bruto: 1, total_a_pagar: 1 }), xml },
+      { correo: correo(), cfg, trm: 4000 },
     );
     expect(f).toMatchObject({
       numero_factura: "FE-1234",
       tipo_movimiento: "Egreso facturación",
-      categoria: "Arriendos y servicios", // regla Enel gana sobre el modelo
+      categoria: "Arriendos y servicios", // regla Enel (por NIT) gana sobre el modelo
       tipo_documento: "Servicio público",
-      centro_costos: "TROOP BOG 5762-3 SAS", // el NIT del receptor manda, aunque el texto mencione Chicó 95
+      centro_costos: "TROOP BOG 9513-1 SAS", // el contrato 1381914 es el del local Chicó 95
       cuenta: "513525",
-      nit: "0860063875".replace(/\D/g, ""),
+      nit: "860063875",
       valor_bruto: 1_000_000,
       iva: 190_000,
       retefuente: 40_000,
@@ -42,16 +42,29 @@ describe("construirFactura", () => {
       cufe: "abc123cufe",
       estado: "Pendiente",
     });
-    expect(f.reglas_aplicadas).toContain("Energía (Enel)");
+    expect(f.reglas_aplicadas).toContain("Enel (energía)");
+    expect(f.requiere_revision).toBe(false);
+  });
+
+  it("factura a nombre de otra sociedad del grupo: esa sociedad manda, diga lo que diga el texto", () => {
+    const xml = { ...parseFacturaDian(invoiceXml)!, receptor_nit: "901632013" };
+    const f = construirFactura({ doc: doc({ numero_factura: "FE-1234" }), xml }, { correo: correo(), cfg, trm: null });
+    expect(f.centro_costos).toBe("TROOP BOG 5762-3 SAS");
+  });
+
+  it("gasto general a nombre de la operadora se queda en la operadora", () => {
+    const xml = { ...parseFacturaDian(invoiceXml)!, emisor_nit: "901398069", descripcion_items: ["Suscripción plataforma"] };
+    const f = construirFactura({ doc: doc({ numero_factura: "FE-1234", centro_costos: "TROOP TEAM SAS" }), xml }, { correo: correo(), cfg, trm: null });
+    expect(f).toMatchObject({ centro_costos: "TROOP TEAM SAS", categoria: "Licencias" });
   });
 
   it("detecta factura emitida por la empresa como ingreso", () => {
-    const xml = { ...parseFacturaDian(invoiceXml)!, emisor_nit: "9018560541", receptor_nit: "800111222", receptor_razon_social: "Cliente SA" };
+    const xml = { ...parseFacturaDian(invoiceXml)!, emisor_nit: "9014650154", receptor_nit: "900236520", receptor_razon_social: "CADENA COMERCIAL OXXO COLOMBIA SAS", descripcion_items: ["Arriendo"] };
     const f = construirFactura({ doc: null, xml }, { correo: correo(), cfg, trm: null });
     expect(f.tipo_movimiento).toBe("Ingreso facturación");
-    expect(f.centro_costos).toBe("TROOP ALTS SAS");
-    expect(f.nit).toBe("800111222");
-    expect(f.razon_social).toBe("Cliente SA");
+    expect(f.centro_costos).toBe("TROOP BOG 9364-4 SAS"); // la operadora factura; el inquilino (OXXO) indica la sociedad
+    expect(f.nit).toBe("900236520");
+    expect(f.razon_social).toBe("CADENA COMERCIAL OXXO COLOMBIA SAS");
     expect(f.requiere_revision).toBe(true); // sin documento del modelo
   });
 
@@ -74,6 +87,11 @@ describe("construirFactura", () => {
     expect(f.medio_pago).toBe("Crédito");
     expect(f.estado).toBe("Pagada");
     expect(f.fecha_pago).toBe("2026-11-01");
+  });
+
+  it("la pista por inquilino no aplica a compras (Davivienda como banco no es Torre CCI)", () => {
+    const f = construirFactura({ doc: doc(), xml: null }, { correo: correo({ text: "Consignar a la cuenta Davivienda 123" }), cfg, trm: null });
+    expect(f.centro_costos).toBe("TROOP TEAM SAS");
   });
 
   it("regla por remitente fija la tarjeta (Google Workspace)", () => {

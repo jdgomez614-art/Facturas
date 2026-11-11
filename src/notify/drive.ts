@@ -11,6 +11,8 @@ export function nombreSeguro(s: string, max = 80): string {
   return s.replace(/[\\/:*?"<>|\n\r\t]+/g, "-").replace(/\s+/g, " ").trim().slice(0, max) || "sin-nombre";
 }
 
+const normalizar = (s: string) => s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, " ").trim();
+
 export interface ArchivoDrive {
   id: string;
   webViewLink: string;
@@ -32,6 +34,18 @@ export class DriveClient {
     return r.data.files[0] ?? null;
   }
 
+  /** Busca una subcarpeta tolerando diferencias de mayúsculas, tildes y espacios ("10. octubre", "07.  Julio"),
+   *  porque las carpetas existentes fueron creadas a mano. */
+  private async buscarCarpeta(nombre: string, padre: string): Promise<string | null> {
+    const q = `'${padre}' in parents and trashed = false and mimeType = '${CARPETA}'`;
+    const r = await this.http.request<{ files: { id: string; name: string }[] }>({
+      url: `${API}?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=200&${TODAS}`,
+      retry: true,
+    });
+    const n = normalizar(nombre);
+    return r.data.files.find((f) => normalizar(f.name) === n)?.id ?? null;
+  }
+
   /** Devuelve el id de raíz/a/b/c, creando lo que falte. */
   async carpeta(ruta: string[]): Promise<string> {
     let padre = Promise.resolve(this.raizId);
@@ -42,8 +56,8 @@ export class DriveClient {
         const p = padre;
         const promesa = (async () => {
           const padreId = await p;
-          const existe = await this.buscar(parte, padreId, true);
-          if (existe) return existe.id;
+          const existe = await this.buscarCarpeta(parte, padreId);
+          if (existe) return existe;
           const r = await this.http.request<{ id: string }>({
             url: `${API}?fields=id&supportsAllDrives=true`,
             method: "POST",

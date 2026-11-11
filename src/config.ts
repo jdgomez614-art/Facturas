@@ -24,7 +24,9 @@ const ReglaSchema = z.object({
 export const EmpresaConfigSchema = z.object({
   /** Las sociedades del grupo. El centro de costos de cada factura ES la sociedad a cuyo nombre está. */
   sociedades: z.array(z.object({ nombre: z.string(), nit: z.string().regex(/^\d{9}(-\d)?$/), inmueble: z.string() })).min(1),
-  sociedad_por_defecto: z.string(),
+  /** La sociedad que opera: recibe las facturas de gastos de los inmuebles y factura los arriendos.
+   *  Un documento a su nombre NO define el centro de costos: se busca a qué sociedad/inmueble corresponde. */
+  sociedad_operadora: z.string(),
   tipos_movimiento: z.array(z.string()).min(1),
   categorias: z.array(z.string()).min(1),
   cuentas_por_categoria: z.record(z.string(), z.string()),
@@ -37,11 +39,12 @@ export const EmpresaConfigSchema = z.object({
     }),
   ),
   reglas: z.array(ReglaSchema),
-  referencias_centro_costos: z.array(z.object({ contiene: z.array(z.string()), centro_costos: z.string() })),
+  referencias_centro_costos: z.array(z.object({ contiene: z.array(z.string()), centro_costos: z.string(), solo_ingresos: z.boolean().optional() })),
   remitentes_ignorados: z.array(z.string()),
   palabras_clave: z.array(z.string()),
   revision: z.object({ confianza_minima: z.number(), tolerancia_cuadre: z.number() }),
   recordatorios: z.object({ dias_antes_vencimiento: z.number().int() }),
+  archivo: z.object({ anio_base: z.number().int() }),
 });
 
 export type EmpresaConfig = z.infer<typeof EmpresaConfigSchema> & { centros_costos: string[] };
@@ -53,7 +56,7 @@ export function parseEmpresaConfig(raw: unknown): EmpresaConfig {
   const base = EmpresaConfigSchema.parse(stripComments(raw));
   const cfg: EmpresaConfig = { ...base, centros_costos: base.sociedades.map((s) => s.nombre) };
   const errores: string[] = [];
-  if (!cfg.centros_costos.includes(cfg.sociedad_por_defecto)) errores.push(`sociedad_por_defecto "${cfg.sociedad_por_defecto}" no está en "sociedades"`);
+  if (!cfg.centros_costos.includes(cfg.sociedad_operadora)) errores.push(`sociedad_operadora "${cfg.sociedad_operadora}" no está en "sociedades"`);
   for (const r of cfg.reglas) {
     const a = r.asignar;
     if (a.categoria && !cfg.categorias.includes(a.categoria)) errores.push(`Regla "${r.nombre}": categoría desconocida "${a.categoria}"`);

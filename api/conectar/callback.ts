@@ -21,7 +21,7 @@ export async function GET(req: Request): Promise<Response> {
   try {
     const deps = depsProduccion();
     const c = await completarConexion(googleApp(), deps.repo, code, process.env.SHEETS_TAB ?? "Registro de facturas");
-    return ir({ ok: c.email, sheet: c.sheet_id ?? "", carpeta: c.drive_folder_id ?? "" });
+    return ir({ ok: c.email, sheet: process.env.SHEETS_SPREADSHEET_ID ?? c.sheet_id ?? "", carpeta: process.env.DRIVE_FOLDER_ID ?? c.drive_folder_id ?? "" });
   } catch (e) {
     if (e instanceof ErrorNoPermitido) return ir({ error: e.message });
     console.error(JSON.stringify({ ev: "conexion_error", error: (e as Error).message }));

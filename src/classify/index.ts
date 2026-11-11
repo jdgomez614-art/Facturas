@@ -5,7 +5,7 @@ import type { FacturaXml } from "../parse/dian-xml.js";
 import type { CorreoEntrante, Factura } from "../types.js";
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
-const soloDigitos = (s: string | null | undefined) => (s ? s.replace(/\D/g, "") : "");
+const soloDigitos = (s: string | null | undefined) => (s ? s.replace(/\D/g, "").replace(/^0+/, "") : "");
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Filtro barato antes de gastar una llamada al modelo. */
@@ -66,7 +66,9 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
   const razonSocial = xml ? (emitidaPorNosotros ? xml.receptor_razon_social : xml.emisor_razon_social) : doc?.razon_social ?? null;
 
   let categoria = doc?.categoria ?? "Otros Egresos";
-  let centro = sociedad?.nombre ?? doc?.centro_costos ?? cfg.sociedad_por_defecto;
+  // ...salvo que sea la operadora: ahí el centro de costos depende del inmueble (pistas) o de lo que lea el modelo.
+  const defineCentro = sociedad !== null && sociedad.nombre !== cfg.sociedad_operadora;
+  let centro = defineCentro ? sociedad.nombre : doc?.centro_costos ?? cfg.sociedad_operadora;
   let tipoDocumento: string = doc?.tipo_documento ?? (xml?.tipo === "CreditNote" ? "Nota crédito" : "Factura electrónica");
   let cuenta: string | null = null;
   let medio: Factura["medio_pago"] = doc?.medio_pago ?? "Por definir";
@@ -74,11 +76,13 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
   if (!doc) motivos.push("Clasificación por defecto: el modelo no devolvió este documento");
 
   // 2. Reglas determinísticas del negocio (ganan sobre el modelo).
-  const texto = norm([correo.from, correo.subject, correo.text.slice(0, 20000), razonSocial ?? "", doc?.descripcion ?? "", ...(xml?.descripcion_items ?? [])].join("\n"));
+  const texto = norm([correo.from, correo.subject, correo.text.slice(0, 20000), razonSocial ?? "", doc?.tercero ?? "", doc?.descripcion ?? "", ...(xml?.descripcion_items ?? [])].join("\n"));
   const rctx = { remitente: norm(correo.from), texto, nit: nit ?? "" };
   const fijado = new Set<string>();
-  if (sociedad) fijado.add("centro");
-  else if (xml) motivos.push(`La factura está a nombre del NIT ${xml.receptor_nit ?? "?"}, que no es de ninguna sociedad del grupo`);
+  if (defineCentro) fijado.add("centro");
+  else if (sociedad) {
+    /* a nombre de la operadora: lo resuelven reglas y pistas más abajo */
+  } else if (xml) motivos.push(`La factura está a nombre del NIT ${xml.receptor_nit ?? "?"}, que no es de ninguna sociedad del grupo`);
   else if (!doc) motivos.push("No se pudo determinar la sociedad");
   for (const regla of cfg.reglas) {
     if (!reglaCoincide(regla, rctx)) continue;
@@ -99,7 +103,8 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
     if (a.tarjeta) set("tarjeta", () => (ultimos4 = a.tarjeta!));
   }
   if (!fijado.has("centro")) {
-    const ref = cfg.referencias_centro_costos.find((r) => r.contiene.some((c) => texto.includes(norm(c))));
+    const esIngreso = tipoMovimiento === "Ingreso facturación";
+    const ref = cfg.referencias_centro_costos.find((r) => (!r.solo_ingresos || esIngreso) && r.contiene.some((c) => texto.includes(norm(c))));
     if (ref) {
       centro = ref.centro_costos;
       reglasAplicadas.push(`Referencia → ${ref.centro_costos}`);
