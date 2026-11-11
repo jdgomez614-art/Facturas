@@ -1,10 +1,62 @@
 {
   "$comentario": "Catálogos y reglas del negocio. Todo lo que no es secreto vive aquí y se versiona en git.",
-  "empresa": {
-    "nombre": "Mi Empresa S.A.S.",
-    "nits_propios": ["900000000"]
-  },
-  "tipos_movimiento": ["Ingreso facturación", "Egreso facturación"],
+  "sociedades": [
+    {
+      "nombre": "TROOP TEAM SAS",
+      "nit": "901465015-4",
+      "inmueble": "N/A (sociedad matriz / operación general)"
+    },
+    {
+      "nombre": "TROOP BOG 9513-1 SAS",
+      "nit": "901429709-4",
+      "inmueble": "Local Chicó 95"
+    },
+    {
+      "nombre": "TROOP CLO 629-1 SAS",
+      "nit": "901604218-1",
+      "inmueble": "Local Torre CCI"
+    },
+    {
+      "nombre": "TROOP BOG 5762-3 SAS",
+      "nit": "901632013-6",
+      "inmueble": "Local CC PVR"
+    },
+    {
+      "nombre": "TROOP BOG 9364-4 SAS",
+      "nit": "901698923-7",
+      "inmueble": "Local Álamos"
+    },
+    {
+      "nombre": "TROOP MEX SAS",
+      "nit": "901727108-6",
+      "inmueble": "Casa Mérida"
+    },
+    {
+      "nombre": "TROOP PREMIUM DVP SAS",
+      "nit": "901788055-4",
+      "inmueble": "Desarrollo St Petersburg y West Palm Beach (Datura)"
+    },
+    {
+      "nombre": "TROOP PLUS DF SAS",
+      "nit": "901802129-1",
+      "inmueble": "Portafolios de Vivienda (excepto PV2), Locales Comerciales 82"
+    },
+    {
+      "nombre": "TROOP PORTAFOLIO VIVIENDA 2 SAS",
+      "nit": "901826069-1",
+      "inmueble": "Portafolio Vivienda 2"
+    },
+    {
+      "nombre": "TROOP ALTS SAS",
+      "nit": "901856054-1",
+      "inmueble": "Skypointer"
+    }
+  ],
+  "sociedad_por_defecto": "TROOP TEAM SAS",
+  "tipos_movimiento": [
+    "Ingreso facturación",
+    "Egreso facturación"
+  ],
   "categorias": [
     "Arriendos y servicios",
     "Nómina",
@@ -14,25 +66,6 @@
     "Pago Nómina",
     "Otros Egresos",
     "Gastos de terceros"
-  ],
-  "centros_costos": [
-    "Sociedad",
-    "Casa Merida Centro",
-    "Local Alamos",
-    "Local CC PVR",
-    "Local Chico 95",
-    "Local Torre CCI",
-    "Locales Comerciales 82",
-    "Oficinas Wynwood Sky",
-    "Portafolio Vivienda 1 (Etapa 1)",
-    "Portafolio Vivienda 1 (Etapa 2)",
-    "Portafolio Vivienda 2",
-    "Portafolio Vivienda 3",
-    "Portafolio Vivienda 4",
-    "Portafolio Vivienda 8 (Etapa 2)",
-    "Portafolio Vivienda 13",
-    "Portafolio Vivienda 15 Plus",
-    "SKYPOINTER"
   ],
   "cuentas_por_categoria": {
     "$comentario": "Cuenta contable (PUC) por defecto según categoría. AJUSTAR al plan de cuentas real.",
@@ -46,47 +79,173 @@
     "Gastos de terceros": "281505"
   },
   "tarjetas": [
-    { "alias": "Visa Corporativa", "tipo": "Crédito", "ultimos4": "1234", "banco": "Banco X" },
-    { "alias": "Débito Cuenta Corriente", "tipo": "Débito", "ultimos4": "5678", "banco": "Banco X" }
+    {
+      "alias": "Visa Corporativa",
+      "tipo": "Crédito",
+      "ultimos4": "1234",
+      "banco": "Banco X"
+    },
+    {
+      "alias": "Débito Cuenta Corriente",
+      "tipo": "Débito",
+      "ultimos4": "5678",
+      "banco": "Banco X"
+    }
   ],
   "reglas": [
     {
       "nombre": "Energía (Enel)",
-      "si": { "remitente_contiene": ["enel.com"], "texto_contiene": ["enel", "codensa"] },
-      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Servicio público" }
+      "si": {
+        "remitente_contiene": [
+          "enel.com"
+        ],
+        "texto_contiene": [
+          "enel",
+          "codensa"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "tipo_documento": "Servicio público"
+      }
     },
     {
       "nombre": "Acueducto Bogotá",
-      "si": { "texto_contiene": ["acueducto", "eaab"] },
-      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Servicio público" }
+      "si": {
+        "texto_contiene": [
+          "acueducto",
+          "eaab"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "tipo_documento": "Servicio público"
+      }
     },
     {
       "nombre": "Gas (Vanti)",
-      "si": { "texto_contiene": ["vanti"] },
-      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Servicio público" }
+      "si": {
+        "texto_contiene": [
+          "vanti"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "tipo_documento": "Servicio público"
+      }
     },
     {
       "nombre": "Cuotas de administración",
-      "si": { "texto_contiene": ["cuota de administración", "cuota de administracion", "propiedad horizontal"] },
-      "asignar": { "categoria": "Arriendos y servicios", "tipo_documento": "Administración" }
+      "si": {
+        "texto_contiene": [
+          "cuota de administración",
+          "cuota de administracion",
+          "propiedad horizontal"
+        ]
+      },
+      "asignar": {
+        "categoria": "Arriendos y servicios",
+        "tipo_documento": "Administración"
+      }
     },
     {
       "nombre": "Ejemplo: Google Workspace siempre a la Visa",
-      "si": { "remitente_contiene": ["payments-noreply@google.com"] },
-      "asignar": { "categoria": "Licencias", "centro_costos": "Sociedad", "medio_pago": "Crédito", "tarjeta": "1234" }
+      "si": {
+        "remitente_contiene": [
+          "payments-noreply@google.com"
+        ]
+      },
+      "asignar": {
+        "categoria": "Licencias",
+        "medio_pago": "Crédito",
+        "tarjeta": "1234"
+      }
     }
   ],
   "referencias_centro_costos": [
-    { "$comentario": "Si el texto del correo/factura contiene alguno de estos textos (dirección, # contrato, # cuenta de servicio), se asigna ese centro de costos.", "contiene": ["chico 95", "chicó 95"], "centro_costos": "Local Chico 95" },
-    { "contiene": ["torre cci"], "centro_costos": "Local Torre CCI" },
-    { "contiene": ["wynwood"], "centro_costos": "Oficinas Wynwood Sky" },
-    { "contiene": ["skypointer"], "centro_costos": "SKYPOINTER" }
+    {
+      "$comentario": "Pista cuando el documento NO trae el NIT de la sociedad: si el texto menciona el inmueble, se asigna su sociedad. El NIT del receptor siempre manda sobre esto.",
+      "contiene": [
+        "chico 95",
+        "chicó 95"
+      ],
+      "centro_costos": "TROOP BOG 9513-1 SAS"
+    },
+    {
+      "contiene": [
+        "torre cci"
+      ],
+      "centro_costos": "TROOP CLO 629-1 SAS"
+    },
+    {
+      "contiene": [
+        "pvr"
+      ],
+      "centro_costos": "TROOP BOG 5762-3 SAS"
+    },
+    {
+      "contiene": [
+        "alamos"
+      ],
+      "centro_costos": "TROOP BOG 9364-4 SAS"
+    },
+    {
+      "contiene": [
+        "merida"
+      ],
+      "centro_costos": "TROOP MEX SAS"
+    },
+    {
+      "contiene": [
+        "datura",
+        "st petersburg",
+        "west palm"
+      ],
+      "centro_costos": "TROOP PREMIUM DVP SAS"
+    },
+    {
+      "contiene": [
+        "portafolio vivienda 2",
+        "portafolio de vivienda 2"
+      ],
+      "centro_costos": "TROOP PORTAFOLIO VIVIENDA 2 SAS"
+    },
+    {
+      "contiene": [
+        "locales comerciales 82"
+      ],
+      "centro_costos": "TROOP PLUS DF SAS"
+    },
+    {
+      "contiene": [
+        "skypointer"
+      ],
+      "centro_costos": "TROOP ALTS SAS"
+    }
   ],
-  "remitentes_ignorados": ["no-reply@slack.com", "notifications@github.com"],
+  "remitentes_ignorados": [
+    "no-reply@slack.com",
+    "notifications@github.com"
+  ],
   "palabras_clave": [
-    "factura", "cuenta de cobro", "cobro", "recibo", "pago", "vencimiento", "valor a pagar",
-    "administración", "administracion", "energía", "energia", "acueducto", "gas natural",
-    "invoice", "receipt", "payment", "cargo", "extracto"
+    "factura",
+    "cuenta de cobro",
+    "cobro",
+    "recibo",
+    "pago",
+    "vencimiento",
+    "valor a pagar",
+    "administración",
+    "administracion",
+    "energía",
+    "energia",
+    "acueducto",
+    "gas natural",
+    "invoice",
+    "receipt",
+    "payment",
+    "cargo",
+    "extracto"
   ],
   "revision": {
     "confianza_minima": 0.75,

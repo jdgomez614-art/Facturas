@@ -16,7 +16,7 @@ export function GET(): Response {
       usuarios_permitidos: !!process.env.USUARIOS_PERMITIDOS,
       slack: !!(env.SLACK_BOT_TOKEN && env.SLACK_CHANNEL_ID),
       categorias: cfg.categorias.length,
-      centros_costos: cfg.centros_costos.length,
+      sociedades: cfg.sociedades.length,
       reglas: cfg.reglas.length,
     });
   } catch (e) {

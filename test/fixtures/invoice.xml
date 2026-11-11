@@ -10,7 +10,7 @@
     <cac:PartyTaxScheme><cbc:RegistrationName>ENEL COLOMBIA S.A. E.S.P.</cbc:RegistrationName><cbc:CompanyID schemeID="1">0860063875</cbc:CompanyID></cac:PartyTaxScheme>
   </cac:Party></cac:AccountingSupplierParty>
   <cac:AccountingCustomerParty><cac:Party>
-    <cac:PartyTaxScheme><cbc:RegistrationName>MI EMPRESA SAS</cbc:RegistrationName><cbc:CompanyID schemeID="5">900000000</cbc:CompanyID></cac:PartyTaxScheme>
+    <cac:PartyTaxScheme><cbc:RegistrationName>TROOP BOG 5762-3 SAS</cbc:RegistrationName><cbc:CompanyID schemeID="6">901632013</cbc:CompanyID></cac:PartyTaxScheme>
   </cac:Party></cac:AccountingCustomerParty>
   <cac:TaxTotal><cbc:TaxAmount currencyID="COP">190000.00</cbc:TaxAmount>
     <cac:TaxSubtotal><cbc:TaxAmount currencyID="COP">190000.00</cbc:TaxAmount><cac:TaxCategory><cac:TaxScheme><cbc:ID>01</cbc:ID><cbc:Name>IVA</cbc:Name></cac:TaxScheme></cac:TaxCategory></cac:TaxSubtotal>
@@ -26,5 +26,5 @@
     <cbc:TaxInclusiveAmount currencyID="COP">1190000.00</cbc:TaxInclusiveAmount>
     <cbc:PayableAmount currencyID="COP">1190000.00</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>
-  <cac:InvoiceLine><cbc:ID>1</cbc:ID><cac:Item><cbc:Description>Energía eléctrica octubre - Cra 9 # 95, Local Chico 95</cbc:Description></cac:Item></cac:InvoiceLine>
+  <cac:InvoiceLine><cbc:ID>1</cbc:ID><cac:Item><cbc:Description>Energía eléctrica octubre - Local Chico 95</cbc:Description></cac:Item></cac:InvoiceLine>
 </Invoice>

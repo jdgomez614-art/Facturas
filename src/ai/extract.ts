@@ -26,11 +26,12 @@ export function esquemaExtraccion(cfg: EmpresaConfig) {
     fecha_vencimiento: fecha.describe("Fecha límite de pago YYYY-MM-DD"),
     tercero: z.string().nullable().describe("Nombre comercial del proveedor o cliente"),
     nit: z.string().nullable().describe("NIT o cédula del tercero, solo dígitos, sin dígito de verificación"),
+    nit_sociedad: z.string().nullable().describe("NIT de la sociedad del grupo a cuyo nombre está el documento, tal como aparece en él; null si no aparece"),
     razon_social: z.string().nullable(),
     descripcion: z.string().describe("Descripción breve (máx. 120 caracteres) de qué se cobra"),
     tipo_movimiento: z.enum(cfg.tipos_movimiento as [string, ...string[]]),
     categoria: z.enum(cfg.categorias as [string, ...string[]]),
-    centro_costos: z.enum(cfg.centros_costos as [string, ...string[]]),
+    centro_costos: z.enum(cfg.centros_costos as [string, ...string[]]).describe("Sociedad del grupo a la que corresponde el documento"),
     moneda: z.enum(["COP", "USD"]),
     valor_bruto: z.number().describe("Subtotal antes de IVA"),
     iva: z.number(),
@@ -53,11 +54,13 @@ export type DocumentoExtraido = Extraccion["documentos"][number];
 
 function systemPrompt(cfg: EmpresaConfig): string {
   const tarjetas = cfg.tarjetas.map((t) => `- ${t.alias}: ${t.tipo} terminada en ${t.ultimos4}`).join("\n");
-  return `Eres el asistente contable de ${cfg.empresa.nombre} (NIT ${cfg.empresa.nits_propios.join(", ")}), una empresa colombiana de inversión inmobiliaria.
+  const sociedades = cfg.sociedades.map((s) => `- ${s.nombre} | NIT ${s.nit} | ${s.inmueble}`).join("\n");
+  return `Eres el asistente contable de un grupo colombiano de inversión inmobiliaria formado por estas sociedades (nombre | NIT | inmueble o proyecto):
+${sociedades}
 Recibes un correo con sus adjuntos y debes extraer cada documento de cobro que contenga (factura electrónica, cuenta de cobro, recibo de servicio público, cuota de administración, comprobante de pago con tarjeta, nota crédito) y clasificarlo.
 
 Cómo clasificar:
-- tipo_movimiento: "Egreso facturación" si la empresa es quien paga (el emisor es un tercero). "Ingreso facturación" si la empresa es quien emite y cobra.
+- tipo_movimiento: "Egreso facturación" si una sociedad del grupo es quien paga (el emisor es un tercero). "Ingreso facturación" si una sociedad del grupo es quien emite y cobra.
 - categoria:
   · "Arriendos y servicios": arriendos, servicios públicos (energía, agua, gas, internet), cuotas de administración de inmuebles.
   · "Licencias": software, SaaS, suscripciones.
@@ -66,8 +69,8 @@ Cómo clasificar:
   · "Gastos de terceros": gastos que se pagan por cuenta de un inversionista o tercero y se recobran.
   · "Gastos Administrativos": papelería, aseo, mensajería, bancos, gastos generales de oficina.
   · "Otros Egresos": todo lo demás.
-- centro_costos: el inmueble/activo al que corresponde el gasto si se puede identificar por dirección, nombre del edificio, número de contrato o cuenta del servicio. Si es un gasto general de la empresa o no se puede determinar, usa "Sociedad" y agrégalo a "dudas" si no es obvio.
-- medio_pago y tarjeta: solo si el documento dice con qué se pagó o se pagará (débito automático, cargo a tarjeta de crédito terminada en XXXX, etc.). Tarjetas de la empresa:
+- centro_costos: es la sociedad del grupo a cuyo nombre está el documento. Identifícala por el NIT o la razón social del cliente/receptor que aparece en el documento (y copia ese NIT en nit_sociedad). Si no aparece, dedúcela por el inmueble o proyecto mencionado (dirección, nombre del local o edificio). Si no hay forma de saberlo, usa "${cfg.sociedad_por_defecto}" y explícalo en "dudas".
+- medio_pago y tarjeta: solo si el documento dice con qué se pagó o se pagará (débito automático, cargo a tarjeta de crédito terminada en XXXX, etc.). Tarjetas del grupo:
 ${tarjetas || "- (ninguna configurada)"}
   Si no hay evidencia, usa "Por definir" y tarjeta null.
 - Valores en números sin separadores de miles (ej. 1234567.89). Si el documento no discrimina IVA o retenciones, pon 0.

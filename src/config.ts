@@ -22,10 +22,11 @@ const ReglaSchema = z.object({
 });
 
 export const EmpresaConfigSchema = z.object({
-  empresa: z.object({ nombre: z.string(), nits_propios: z.array(z.string()) }),
+  /** Las sociedades del grupo. El centro de costos de cada factura ES la sociedad a cuyo nombre está. */
+  sociedades: z.array(z.object({ nombre: z.string(), nit: z.string().regex(/^\d{9}(-\d)?$/), inmueble: z.string() })).min(1),
+  sociedad_por_defecto: z.string(),
   tipos_movimiento: z.array(z.string()).min(1),
   categorias: z.array(z.string()).min(1),
-  centros_costos: z.array(z.string()).min(1),
   cuentas_por_categoria: z.record(z.string(), z.string()),
   tarjetas: z.array(
     z.object({
@@ -43,13 +44,16 @@ export const EmpresaConfigSchema = z.object({
   recordatorios: z.object({ dias_antes_vencimiento: z.number().int() }),
 });
 
-export type EmpresaConfig = z.infer<typeof EmpresaConfigSchema>;
+export type EmpresaConfig = z.infer<typeof EmpresaConfigSchema> & { centros_costos: string[] };
+export type Sociedad = EmpresaConfig["sociedades"][number];
 export type Regla = z.infer<typeof ReglaSchema>;
 
 /** Carga y valida el JSON; además verifica que las reglas apunten a valores que existen en los catálogos. */
 export function parseEmpresaConfig(raw: unknown): EmpresaConfig {
-  const cfg = EmpresaConfigSchema.parse(stripComments(raw));
+  const base = EmpresaConfigSchema.parse(stripComments(raw));
+  const cfg: EmpresaConfig = { ...base, centros_costos: base.sociedades.map((s) => s.nombre) };
   const errores: string[] = [];
+  if (!cfg.centros_costos.includes(cfg.sociedad_por_defecto)) errores.push(`sociedad_por_defecto "${cfg.sociedad_por_defecto}" no está en "sociedades"`);
   for (const r of cfg.reglas) {
     const a = r.asignar;
     if (a.categoria && !cfg.categorias.includes(a.categoria)) errores.push(`Regla "${r.nombre}": categoría desconocida "${a.categoria}"`);

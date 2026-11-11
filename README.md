@@ -24,7 +24,7 @@ Google Sheets y avisa en Slack lo que hay que pagar.
 - **Personas**: entran a la página, pulsan *Conectar con Google* y autorizan su correo y su Drive.
   El sistema les crea una carpeta `Facturas (automático)` y una hoja `Registro de facturas (automático)`.
 - **Clasificación**: la factura electrónica (ZIP con XML de la DIAN) se lee de forma exacta: NIT, número,
-  CUFE, valores, IVA, retenciones. Claude clasifica categoría / centro de costos / medio de pago / tarjeta y
+  CUFE, valores, IVA, retenciones. Claude clasifica categoría / sociedad (centro de costos) / medio de pago / tarjeta y
   extrae los documentos que no traen XML. Las reglas de `config/empresa.json` mandan sobre el modelo.
 - **Confiabilidad**: nunca modifica el correo; no repite facturas (CUFE o NIT+número); reintenta errores y
   avisa en Slack cuando un correo falla 3 veces; si Sheets o Slack se caen, lo pendiente sale en la siguiente
@@ -56,8 +56,8 @@ Requiere revisión, Motivos, Remitente, Asunto, Recibido, Archivo (Drive), ID si
 5. **Vercel**: importa el repo y carga las variables de `.env.example`. El cron cada 15 minutos requiere plan
    Pro; en Hobby solo corre una vez al día (alternativa: cualquier programador externo que llame
    `GET /api/cron/poll` con `Authorization: Bearer $CRON_SECRET`).
-6. **Tu negocio**: edita `config/empresa.json` — NIT propio, tarjetas (últimos 4), cuentas contables por
-   categoría, reglas por proveedor y referencias de cada inmueble (dirección, # de contrato del servicio).
+6. **Tu negocio**: edita `config/empresa.json` — sociedades (el centro de costos es la sociedad a cuyo nombre está la factura, por NIT), tarjetas (últimos 4), cuentas contables por
+   categoría, reglas por proveedor y pistas por inmueble para documentos que no traen NIT.
 7. Abre `https://TU-APP/api/health` para verificar y luego `https://TU-APP/` para conectar la primera cuenta.
 
 Correos que no son Google (Outlook, Zoho, hosting): se agregan en `MAILBOXES_JSON` (ver `.env.example`).
@@ -73,7 +73,7 @@ DRY_RUN=1 npm run poll   # lee los buzones de MAILBOXES_JSON y muestra lo que re
 
 ## Límites conocidos
 
-- El catálogo (categorías, centros de costo, tarjetas, reglas) es uno solo para toda la instalación: está
+- El catálogo (sociedades, categorías, tarjetas, reglas) es uno solo para toda la instalación: está
   pensado para varias personas de una misma empresa, no para varias empresas distintas.
 - El login con cuenta propia existe para Google. Microsoft/Outlook entra por `MAILBOXES_JSON`.
 - Slack usa un solo canal para todos.

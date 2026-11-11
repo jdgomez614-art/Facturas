@@ -1,4 +1,4 @@
-import type { EmpresaConfig, Regla } from "../config.js";
+import type { EmpresaConfig, Regla, Sociedad } from "../config.js";
 import type { DocumentoExtraido } from "../ai/extract.js";
 import type { AdjuntosClasificados } from "../mail/attachments.js";
 import type { FacturaXml } from "../parse/dian-xml.js";
@@ -55,7 +55,10 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
   const reglasAplicadas: string[] = [];
 
   // 1. Datos base: XML DIAN (oficial) > modelo.
-  const emitidaPorNosotros = xml ? esPropio(xml.emisor_nit, cfg) : false;
+  const emisora = xml ? sociedadPorNit(xml.emisor_nit, cfg) : null;
+  const emitidaPorNosotros = emisora !== null;
+  // El centro de costos es la sociedad a cuyo nombre está el documento: su NIT es la evidencia más fuerte.
+  const sociedad = xml ? emisora ?? sociedadPorNit(xml.receptor_nit, cfg) : sociedadPorNit(doc?.nit_sociedad ?? null, cfg);
   const nit = soloDigitos(xml ? (emitidaPorNosotros ? xml.receptor_nit : xml.emisor_nit) : doc?.nit) || null;
   let tipoMovimiento = doc?.tipo_movimiento ?? "Egreso facturación";
   if (xml?.emisor_nit) tipoMovimiento = emitidaPorNosotros ? "Ingreso facturación" : "Egreso facturación";
@@ -63,7 +66,7 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
   const razonSocial = xml ? (emitidaPorNosotros ? xml.receptor_razon_social : xml.emisor_razon_social) : doc?.razon_social ?? null;
 
   let categoria = doc?.categoria ?? "Otros Egresos";
-  let centro = doc?.centro_costos ?? "Sociedad";
+  let centro = sociedad?.nombre ?? doc?.centro_costos ?? cfg.sociedad_por_defecto;
   let tipoDocumento: string = doc?.tipo_documento ?? (xml?.tipo === "CreditNote" ? "Nota crédito" : "Factura electrónica");
   let cuenta: string | null = null;
   let medio: Factura["medio_pago"] = doc?.medio_pago ?? "Por definir";
@@ -74,6 +77,9 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
   const texto = norm([correo.from, correo.subject, correo.text.slice(0, 20000), razonSocial ?? "", doc?.descripcion ?? "", ...(xml?.descripcion_items ?? [])].join("\n"));
   const rctx = { remitente: norm(correo.from), texto, nit: nit ?? "" };
   const fijado = new Set<string>();
+  if (sociedad) fijado.add("centro");
+  else if (xml) motivos.push(`La factura está a nombre del NIT ${xml.receptor_nit ?? "?"}, que no es de ninguna sociedad del grupo`);
+  else if (!doc) motivos.push("No se pudo determinar la sociedad");
   for (const regla of cfg.reglas) {
     if (!reglaCoincide(regla, rctx)) continue;
     reglasAplicadas.push(regla.nombre);
@@ -191,11 +197,12 @@ export function construirFactura(par: { doc: DocumentoExtraido | null; xml: Fact
   };
 }
 
-function esPropio(nit: string | null, cfg: EmpresaConfig): boolean {
+/** Busca la sociedad por NIT, aceptando el NIT con o sin dígito de verificación. */
+export function sociedadPorNit(nit: string | null, cfg: EmpresaConfig): Sociedad | null {
   const n = soloDigitos(nit);
-  // Acepta el NIT con o sin dígito de verificación pegado al final.
-  return !!n && cfg.empresa.nits_propios.some((p) => {
-    const q = soloDigitos(p);
-    return q === n || (n.length === q.length + 1 && n.startsWith(q));
-  });
+  if (!n) return null;
+  return cfg.sociedades.find((s) => {
+    const base = s.nit.split("-")[0];
+    return n === base || n === soloDigitos(s.nit) || (n.length === base.length + 1 && n.startsWith(base));
+  }) ?? null;
 }
